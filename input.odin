@@ -149,7 +149,7 @@ Key :: enum i32 {
 }
 
 @(private)
-keys := make(map[Key]Action_State)
+keys: map[Key]Action_State
 
 @(private)
 mouse_mode := MouseMode.Visible
