@@ -12,12 +12,12 @@ Action_State :: enum {
 	Pressed,
 }
 
-MouseMode :: enum {
+Mouse_Mode :: enum {
 	Visible = 0,
 	Captured,
 }
 
-MouseInput :: struct {
+Mouse_Input :: struct {
 	relative: [2]f32,
 	position: [2]f32,
 	buttons:  [glfw.MOUSE_BUTTON_LAST + 1]Action_State,
@@ -148,14 +148,9 @@ Key :: enum i32 {
 	Last          = glfw.KEY_LAST,
 }
 
-@(private)
-keys: map[Key]Action_State
-
-@(private)
-mouse_mode := MouseMode.Visible
-
-// @(private)
-mouse_input := MouseInput{}
+keys:        map[Key]Action_State
+mouse_mode:  Mouse_Mode
+mouse_input: Mouse_Input
 
 @(private)
 window_handle: glfw.WindowHandle
@@ -252,7 +247,7 @@ poll :: proc() {
 	strings.builder_reset(&text_input)
 }
 
-set_mouse_mode :: proc(mode: MouseMode) {
+set_mouse_mode :: proc(mode: Mouse_Mode) {
 	mouse_mode = mode
 	if mode == .Captured {
 		// win_x, win_y := glfw.GetWindowSize(window_handle)
@@ -269,10 +264,6 @@ set_mouse_mode :: proc(mode: MouseMode) {
 	new_mode: i32 = glfw.CURSOR_NORMAL
 	if mode != .Visible do new_mode = glfw.CURSOR_DISABLED
 	glfw.SetInputMode(window_handle, glfw.CURSOR, new_mode)
-}
-
-get_mouse_mode :: proc() -> MouseMode {
-	return mouse_mode
 }
 
 get_mouse_button :: proc(button_index: i32) -> bool {
@@ -330,4 +321,3 @@ text_input: strings.Builder
 get_text_input :: proc() -> string {
 	return strings.to_string(text_input)
 }
-
