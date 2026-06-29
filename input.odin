@@ -7,9 +7,9 @@ import "vendor:glfw"
 
 Action_State :: enum {
 	Not_Pressed = 0,
-	Just_Released,
 	Just_Pressed,
 	Pressed,
+	Repeat,
 }
 
 Mouse_Mode :: enum {
@@ -166,7 +166,9 @@ key_callback :: proc "c" (window_handle: glfw.WindowHandle, key, scancode, actio
 	case glfw.PRESS:
 		keys[Key(key)] = .Just_Pressed
 	case glfw.RELEASE:
-		keys[Key(key)] = .Just_Released
+		keys[Key(key)] = .Not_Pressed
+	case glfw.REPEAT:
+		keys[Key(key)] = .Repeat
 	}
 }
 
@@ -177,7 +179,7 @@ mouse_button_callback :: proc "c" (window_handle: glfw.WindowHandle, button, act
 	case glfw.PRESS:
 		action_state = .Just_Pressed
 	case glfw.RELEASE:
-		action_state = .Just_Released
+		action_state = .Not_Pressed
 	}
 	mouse_input.buttons[button] = action_state
 }
@@ -224,16 +226,18 @@ init :: proc(window: glfw.WindowHandle) {
 
 poll :: proc() {
 	for key, key_val in keys {
-		if key_val == .Just_Pressed do keys[key] = .Pressed
-		if key_val == .Just_Released do keys[key] = .Not_Pressed
+		if key_val == .Just_Pressed || key_val == .Repeat {
+			keys[key] = .Pressed
+		}
 	}
 	// mouse_moved += 1
 	// if mouse_moved > 1 do mouse_input.relative = {0, 0}
 	mouse_input.scroll = 0
 
 	for &mb in mouse_input.buttons {
-		if mb == .Just_Pressed do mb = .Pressed
-		if mb == .Just_Released do mb = .Not_Pressed
+		if mb == .Just_Pressed || mb == .Repeat {
+			mb = .Pressed
+		}
 	}
 
 	new_x, new_y := glfw.GetCursorPos(window_handle)
@@ -277,10 +281,6 @@ get_mouse_button_down :: proc(button_index: i32) -> bool {
 	return mouse_input.buttons[button_index] == .Just_Pressed
 }
 
-get_mouse_button_up :: proc(button_index: i32) -> bool {
-	return mouse_input.buttons[button_index] == .Just_Released
-}
-
 get_mouse_position :: proc() -> [2]f32 {
 	return mouse_input.position
 }
@@ -294,14 +294,9 @@ get_key :: proc(key: Key) -> bool {
 	return action == .Pressed || action == .Just_Pressed
 }
 
-get_key_down :: proc(key: Key) -> bool {
+get_key_down :: proc(key: Key, allow_repeat := false) -> bool {
 	action := keys[key]
-	return action == .Just_Pressed
-}
-
-get_key_up :: proc(key: Key) -> bool {
-	action := keys[key]
-	return action == .Just_Released
+	return action == .Just_Pressed || allow_repeat && action == .Repeat
 }
 
 get_key_raw :: proc(key: Key) -> Action_State {
